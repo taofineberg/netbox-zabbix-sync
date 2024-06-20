@@ -10,6 +10,7 @@ from zabbix_utils import ZabbixAPI, APIRequestError, ProcessingError
 from modules.device import NetworkDevice
 from modules.tools import convert_recordset, proxy_prepper
 from modules.exceptions import EnvironmentVarError, HostgroupError, SyncError
+from modules.hcp import read_vault_credentials, get_vault_credentials
 try:
     from config import (
         templates_config_context,
@@ -19,7 +20,10 @@ try:
         zabbix_device_removal,
         zabbix_device_disable,
         hostgroup_format,
-        nb_device_filter
+        nb_device_filter,
+        netbox_secret_path,
+        zabbix_secret_path,
+        use_hcp_vault
     )
 except ModuleNotFoundError:
     print("Configuration file config.py not found in main directory."
@@ -47,31 +51,35 @@ def main(arguments):
     """Run the sync process."""
     # pylint: disable=too-many-branches, too-many-statements
     # set environment variables
-    if arguments.verbose:
-        logger.setLevel(logging.DEBUG)
-    env_vars = ["ZABBIX_HOST", "NETBOX_HOST", "NETBOX_TOKEN"]
-    if "ZABBIX_TOKEN" in environ:
-        env_vars.append("ZABBIX_TOKEN")
+
+    if use_hcp_vault:
+        vault_url, vault_token, mount_point = read_vault_credentials()
+        netbox_credentials = get_vault_credentials(vault_url, vault_token, mount_point, netbox_secret_path)
+        zabbix_credentials = get_vault_credentials(vault_url, vault_token, mount_point, zabbix_secret_path)
+
+        # Use the credentials from Vault
+        netbox_host = netbox_credentials['netbox_url']
+        netbox_token = netbox_credentials['netbox_token']
+        zabbix_host = zabbix_credentials['zabbix_url']
+        zabbix_token = zabbix_credentials['zabbix_token']
+        # Similarly, use zabbix_credentials as needed
     else:
-        env_vars.append("ZABBIX_USER")
-        env_vars.append("ZABBIX_PASS")
-    for var in env_vars:
-        if var not in environ:
-            e = f"Environment variable {var} has not been defined."
-            logger.error(e)
-            raise EnvironmentVarError(e)
-    # Get all virtual environment variables
-    if "ZABBIX_TOKEN" in env_vars:
-        zabbix_user = None
-        zabbix_pass = None
-        zabbix_token = environ.get("ZABBIX_TOKEN")
-    else:
-        zabbix_user = environ.get("ZABBIX_USER")
-        zabbix_pass = environ.get("ZABBIX_PASS")
-        zabbix_token = None
-    zabbix_host = environ.get("ZABBIX_HOST")
-    netbox_host = environ.get("NETBOX_HOST")
-    netbox_token = environ.get("NETBOX_TOKEN")
+
+        # Get all virtual environment variables
+        if "ZABBIX_TOKEN" in env_vars:
+            zabbix_user = None
+            zabbix_pass = None
+            zabbix_token = environ.get("ZABBIX_TOKEN")
+        else:
+            zabbix_user = environ.get("ZABBIX_USER")
+            zabbix_pass = environ.get("ZABBIX_PASS")
+            zabbix_token = None
+        zabbix_host = environ.get("ZABBIX_HOST")
+        netbox_host = environ.get("NETBOX_HOST")
+        netbox_token = environ.get("NETBOX_TOKEN")
+    
+    
+    
     # Set Netbox API
     netbox = api(netbox_host, token=netbox_token, threading=True)
     # Check if the provided Hostgroup layout is valid
@@ -105,6 +113,8 @@ def main(arguments):
     else:
         proxy_name = "name"
     # Get all Zabbix and Netbox data
+    if args.webhook != None:
+        nb_device_filter = nb_device_filter = {"id": args.webhook}
     netbox_devices = netbox.dcim.devices.filter(**nb_device_filter)
     netbox_site_groups = convert_recordset((netbox.dcim.site_groups.all()))
     netbox_regions = convert_recordset(netbox.dcim.regions.all())
@@ -196,5 +206,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("-v", "--verbose", help="Turn on debugging.",
                         action="store_true")
+    parser.add_argument("-w", "--webhook", type=str,
+                        default="",
+                        help="Webhook host ID")
     args = parser.parse_args()
     main(args)
