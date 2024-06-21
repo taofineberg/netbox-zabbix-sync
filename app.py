@@ -79,11 +79,6 @@ def webhook():
             "python3" ,
             "netbox_zabbix_sync.py",
             '-v',
-            '-l',
-            'tenant/site/dev_role/manufacturer',
-            '-H',
-            '-p',
-            '-j',
             '-w',  # Webhook host ID (Netbox ID)
             str(netbox_id)
         ]
