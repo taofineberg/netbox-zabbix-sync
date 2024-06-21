@@ -62,6 +62,7 @@ def main(arguments):
         netbox_token = netbox_credentials['netbox_token']
         zabbix_host = zabbix_credentials['zabbix_url']
         zabbix_token = zabbix_credentials['zabbix_token']
+
         # Similarly, use zabbix_credentials as needed
     else:
 
