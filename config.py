@@ -41,7 +41,7 @@ zabbix_device_disable = ["Offline", "Planned", "Staged", "Failed"]
 # 'Global/Europe/Netherlands/Amsterdam' instead of just 'Amsterdam'.
 #
 # traverse_site_groups controls the same behaviour for any assigned site_groups.   
-hostgroup_format = "site/manufacturer/dev_role"
+hostgroup_format = "tenant/site/dev_role/manufacturer"
 traverse_regions = False
 traverse_site_groups = False
 

@@ -3,8 +3,6 @@ from flask import Flask, request, jsonify
 import subprocess
 import json
 import logging
-import os
-from dotenv import load_dotenv
 
 # Initialize logging and file name 
 logging.basicConfig(level=logging.DEBUG,format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
