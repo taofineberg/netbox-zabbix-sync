@@ -2,4 +2,4 @@
 zabbix_utils
 hvac
 flask
-git+ssh://git@github.com/taofineberg/pynetbox.git
+git+https://github.com/taofineberg/pynetbox.git
