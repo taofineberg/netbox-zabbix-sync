@@ -29,7 +29,18 @@ def compare_snapshots(prechange, postchange):
 
 @app.route('/', methods=['POST'])
 def webhook():
-    data = request.get_json()
+    try:
+        data = request.get_json()
+        # Add your processing logic here
+        # For example, logging the received data
+        print("Received data:", data)
+        
+        # Return a success response
+        return jsonify({"message": "Data received successfully"}), 200
+    except Exception as e:
+        # Log the error and return an error response
+        print(f"Error processing the request: {e}")
+        return jsonify({"error": "Failed to process data"}), 400
     snapshots = data.get('Snapshots', {})
     prechange = snapshots.get('Prechange', "{}")
     postchange = snapshots.get('Postchange', "{}")
