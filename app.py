@@ -1,4 +1,4 @@
-#!/opt/netbox-zabbix-webhook/.venv/bin/python3
+
 from flask import Flask, request, jsonify
 import subprocess
 import json
