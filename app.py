@@ -2,10 +2,19 @@ from flask import Flask, request, jsonify
 import subprocess
 import logging
 from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
+from update_macros import update_macros
+import os
+import atexit
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from update_macros import update_macros
+from hcp_config import netbox_url, netbox_token, zabbix, itemid_uptime, itemid_error, itemid_update_true, itemid_update_false
+from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
+
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
 logging.info("Starting webhook-app.py")
+
 
 app = Flask(__name__)
 
@@ -40,18 +49,17 @@ def webhook():
                 logging.info(f" - postchange: {value['postchange']}")
         else:
             logging.info("No changes detected.")
+        
+        # Run the update_macros function if the tag starts with 'HCP'
+        if data['tag'].startswith('HCP'):
+            logging.info("HCP tag detected, running HCP command")
+            run_macro_update = update_macros(data, netbox_url, netbox_token, zabbix, itemid_update_true, itemid_update_false, itemid_error)
 
-        command = [
-            "python3",
-            "netbox_zabbix_sync.py",
-            '-v',
-            '-w',
-            str(netbox_id)
-        ]
+        if "error" in run_macro_updatemacro_update:
+            return jsonify(run_macro_update), 400
 
-        if updatetags:
-            command.append('-t')
 
+        command = ["python3", "netbox_zabbix_sync.py", '-v', '-w', str(netbox_id)]
         logging.info(f"Executing command: {command}")
 
         try:
@@ -59,7 +67,8 @@ def webhook():
         except subprocess.CalledProcessError:
             logging.error("Failed to execute the script.")
             return jsonify({'error': 'Failed to execute script'}, 500)
-
+        
+        
         # Uncomment and implement the SLA script execution if needed
         # if any('SLA' in tag for tag in postchange_dict.get('tags', [])):
         #     logging.info("SLA detected, running SLA command")
