@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import subprocess
 import logging
-from webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
+from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
 
 # Initialize logging
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
