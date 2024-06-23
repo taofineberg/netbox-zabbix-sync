@@ -3,3 +3,5 @@ zabbix_utils
 hvac
 flask
 git+https://github.com/taofineberg/pynetbox.git
+apscheduler
+aiohttp
