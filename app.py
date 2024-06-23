@@ -284,7 +284,7 @@ def webhook():
                             device_id_str = str(device_id) 
                             combined_macros.append({
                             "macro": '{$NETBOX_DEVICE}',
-                            "value": str(device_id),  # Assuming device_id is an integer
+                            "value": device_id_str,  # Assuming device_id is an integer
                             "type": 2,  # Assuming type 2 is correct for this macro
                             "description": f"Added by NetBox-HCP-ZBX by TF on {current_time}"
                             })
