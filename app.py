@@ -282,6 +282,15 @@ def webhook():
                                     })
                                     updated = True
 
+                            # Check if {$NETBOX_DEVICE} is missing and add it
+                            if not any(macro['macro'] == '{$NETBOX_DEVICE}' for macro in combined_macros):
+                                combined_macros.append({
+                                    "macro": '{$NETBOX_DEVICE}',
+                                    "value": str(device_id),  # Assuming device_id is an integer
+                                    "type": 2,  # Assuming type 2 is correct for this macro
+                                    "description": f"Added by NetBox-HCP-ZBX by TF on {current_time}"
+                            })
+
                             for key, macro in macro_dict.items():
                                 if key not in zbx_macros:
                                     combined_macros.append({
