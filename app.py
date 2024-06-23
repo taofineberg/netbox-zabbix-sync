@@ -11,6 +11,7 @@ import pynetbox
 import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
 
 
 # read debug webhook url
@@ -178,9 +179,45 @@ def webhook():
         if data is None:
             logging.error("No JSON data received")
             return jsonify({"error": "No JSON data received"}), 400
-
         logging.info(f"Received data: {json.dumps(data, indent=4)}")
         
+        snapshots2 = data.get('Snapshots', {})
+        prechange = snapshots2.get('Prechange', "{}")
+        postchange = snapshots2.get('Postchange', "{}")
+        prechange_dict = normalize_json(prechange)
+        postchange_dict = normalize_json(postchange)
+
+        data_array = data.get('Data', [])
+        netbox_id = data_array[0].get('ID', None) if data_array else None
+        logging.info(f"Debug Netbox_id: {netbox_id}")
+
+        if netbox_id is None:
+            return jsonify({'error': 'Netbox ID not found in webhook payload'}), 400
+
+        changes = compare_snapshots(prechange_dict, postchange_dict)
+        updatetags = any(key in changes for key in ['tenant', 'status', 'site', 'role', 'platform', 'device_type'])
+
+        if changes:
+            for key, value in changes.items():
+                logging.info(f"Changed field: {key}")
+                logging.info(f" - updatetags: {updatetags}")
+                logging.info(f" - prechange: {value['prechange']}")
+                logging.info(f" - postchange: {value['postchange']}")
+        else:
+            logging.info("No changes detected.")
+
+        command = ["python3", "netbox_zabbix_sync.py", '-v', '-w', str(netbox_id)]
+        logging.info(f"Executing command: {command}")
+
+        try:
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError:
+            logging.error("Failed to execute the script netbox_zabbix_sync.py .")
+            return jsonify({'error': 'Failed to execute script'}, 500)
+
+
+
+        ### Check if the payload contains 'Snapshots' and 'Prechange Tags' and 'Postchange Tags'
         if 'Snapshots' in data and 'Prechange Tags' in data['Snapshots'] and 'Postchange Tags' in data['Snapshots']:
             prechange_tags = data['Snapshots']['Prechange Tags']
             postchange_tags = data['Snapshots']['Postchange Tags']
@@ -275,6 +312,8 @@ def webhook():
         else:
             logging.error("Invalid payload: 'Snapshots' key or tags not found")
             return jsonify({"error": "Invalid payload"}), 400
+        ### End of Check if the payload contains 'Snapshots' and 'Prechange Tags' and 'Postchange Tags'
+
     except Exception as e:
         logging.error(f"Unexpected error: {e}")
         return jsonify({"error": "Internal server error"}), 500
