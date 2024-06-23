@@ -6,7 +6,6 @@ import logging
 from datetime import datetime
 import os
 import atexit
-from apscheduler.schedulers.background import BackgroundScheduler
 import pynetbox
 import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
@@ -284,7 +283,7 @@ def webhook():
                             device_id_str = str(device_id) 
                             combined_macros.append({
                             "macro": '{$NETBOX_DEVICE}',
-                            "value": device_id_str,  # Assuming device_id is an integer
+                            "value": str(device_id),  # Assuming device_id is an integer
                             "type": 2,  # Assuming type 2 is correct for this macro
                             "description": f"Added by NetBox-HCP-ZBX by TF on {current_time}"
                             })
