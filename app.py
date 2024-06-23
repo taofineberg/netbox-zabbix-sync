@@ -12,7 +12,8 @@ import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
-
+import subprocess
+import asyncio
 
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
