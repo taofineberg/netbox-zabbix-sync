@@ -68,7 +68,8 @@ async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestam
 scheduler = AsyncIOScheduler()
 scheduler.add_job(send_heartbeat, 'interval', minutes=1)
 #scheduler.add_job(lambda: schedule_async_task(push_to_zabbix, zabbix, itemid_uptime, uptime_counter), 'interval', minutes=1)
-scheduler.add_job(push_to_zabbix, 'interval', args=[zabbix, itemid_uptime, uptime_counter], minutes=1)
+#scheduler.add_job(push_to_zabbix, 'interval', args=[zabbix, itemid_uptime, uptime_counter], minutes=1)
+scheduler.add_job(push_to_zabbix, 'interval', args=[zabbix, itemid_uptime, uptime_counter, itemid_uptime, uptime_counter], minutes=1)
 #scheduler.add_job(lambda: push_to_zabbix(zabbix , itemid_uptime, uptime_counter), 'interval', minutes=1)
 scheduler.start()
 
