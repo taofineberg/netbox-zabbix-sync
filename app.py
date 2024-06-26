@@ -23,17 +23,11 @@ credential = DefaultAzureCredential()
 
 # Azure Key Vault
 AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
-print(f"AZURE_KEY_VAULT_URL: {AZURE_KEY_VAULT_URL}")
-
 
 # Get secret from Azure Key Vault for HCP Vault Token
-secret_name = os.getenv('VAULT_TOKEN')
+secret_name = os.getenv('HCP_VAULT_TOKEN_Azure_Keystore_name')
 secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
 retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
-print(f"The secret value is: {retrieved_secret_HCP_VAULT.value}")
-
-
-
 
 # Global variable to keep track of uptime
 uptime_counter = 0
