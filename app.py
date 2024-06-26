@@ -13,6 +13,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
 import subprocess
 import asyncio
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
 
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
