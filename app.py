@@ -6,13 +6,14 @@ import logging
 from datetime import datetime
 import os
 import atexit
-from zabbix_utils import ZabbixAPI ,AsyncSender
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value,get_item_ids
+from zabbix_utils import ZabbixAPI,Sender,AsyncSender
+from apscheduler.schedulers.background import BackgroundScheduler
+from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value,get_item_ids,push_to_zabbix
 import subprocess
-import asyncio
-#test
 from modules.hcp import read_vault_credentials, get_vault_credentials 
+import asyncio
+
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
@@ -39,6 +40,7 @@ zabbix_token = zabbix_credentials['zabbix_token']
 
 # Initialize Zabbix API
 zabbix  = ZabbixAPI(zabbix_url, token=zabbix_token)
+sender = Sender(server='zabbix_url', port=10051)
 
 # Get Zabbix item IDs for monitoring
 ZBX_Monitoring_host = os.getenv('ZBX_MONITORING_HOST_NAME')
@@ -57,21 +59,13 @@ def send_heartbeat():
     requests.post(debug_webhook_url , json={"message": f"App is up. Uptime: {uptime_counter} minutes"})
 
 
-def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestamp):
-    try:
-        sender = AsyncSender(server=zabbix_server, port=10051)
-        response = sender.send_value(host, item_key, zbx_item_value, timestamp)
-        logging.info(f"Successfully pushed value to Zabbix: {response}")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-
-scheduler = AsyncIOScheduler()
+scheduler = BackgroundScheduler()
 scheduler.add_job(send_heartbeat, 'interval', minutes=1)
-#scheduler.add_job(lambda: schedule_async_task(push_to_zabbix, zabbix, itemid_uptime, uptime_counter), 'interval', minutes=1)
-#scheduler.add_job(push_to_zabbix, 'interval', args=[zabbix, itemid_uptime, uptime_counter], minutes=1)
-scheduler.add_job(push_to_zabbix, 'interval', args=[zabbix, itemid_uptime, uptime_counter, itemid_uptime, uptime_counter], minutes=1)
-#scheduler.add_job(lambda: push_to_zabbix(zabbix , itemid_uptime, uptime_counter), 'interval', minutes=1)
+scheduler.add_job(lambda: push_to_zabbix(zabbix_url, zabbix_token, itemid_uptime, uptime_counter), 'interval', minutes=1)
 scheduler.start()
+
+# Shut down the scheduler when exiting the app
+atexit.register(lambda: scheduler.shutdown())
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
@@ -214,17 +208,18 @@ def webhook():
                                 logging.info(f"Updated Zabbix host macros: {json.dumps(response, indent=4)}")
                                 requests.post(debug_webhook_url , json={"message": "Device needs to be updated.", "device_id": device_id, "zabbix_id": zabbix_hostid})
                                 message = f"Device needs to be updated. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
-                                push_to_zabbix(zabbix , itemid_update_true, message)
+                                push_to_zabbix(zabbix_url, zabbix_token, itemid_update_true, message)
                             else:
                                 logging.info("No changes to macros. Update not required.")
                                 requests.post(debug_webhook_url , json={"message": "No changes to macros. Update not required.", "device_id": device_id, "zabbix_id": zabbix_hostid})
                                 message = f"No changes to macros. Update not required. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
-                                push_to_zabbix(zabbix , itemid_update_false, message)
+                                push_to_zabbix(zabbix_url, zabbix_token, itemid_update_false, message)
                         except Exception as e:
                             logging.error(f"An error occurred while updating Zabbix host macros: {e}")
                             requests.post(debug_webhook_url , json={"message": "An error occurred while updating Zabbix host macros.", "device_id": device_id, "zabbix_id": zabbix_hostid})
                             message = f"An error occurred while updating Zabbix host macros: device_id: {device_id}, zabbix_id: {zabbix_hostid}, error: {e}"
-                            push_to_zabbix(zabbix , itemid_error, message)
+                            push_to_zabbix(zabbix_url, zabbix_token, itemid_error, message)
+
                     break
             
             return jsonify(differences)

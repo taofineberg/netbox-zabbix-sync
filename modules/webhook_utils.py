@@ -77,3 +77,28 @@ def get_item_ids(zabbix , host_name, item_names):
             item_ids[item['name']] = item['itemid']
 
     return item_ids
+
+
+
+
+def push_to_zabbix(zabbix_url, zabbix_token, itemid, zbx_item_value):
+    data = {
+        "jsonrpc": "2.0",
+        "method": "history.push",
+        "params": [
+            {
+                "itemid": itemid,
+                "value": zbx_item_value,
+            }
+        ],
+        "auth": zabbix_token,
+        "id": 1
+    }
+
+    headers = {
+        'content-type': 'application/json',
+    }
+
+    response = requests.post(zabbix_url, data=json.dumps(data), headers=headers)
+    print(response.text)
+    return response.json()
