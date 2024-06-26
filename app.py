@@ -15,7 +15,7 @@ import subprocess
 import asyncio
 #from azure.identity import DefaultAzureCredential
 #from azure.keyvault.secrets import SecretClient
-from modules.hcp import read_vault_credentials, get_vault_credentials
+from modules.hcp import read_vault_credentials, get_vault_credentials,get_differences_tag , fetch_netbox_device_info , get_host_macros , update_host_macros , sanitize_value 
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
@@ -81,48 +81,6 @@ async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestam
 app = Flask(__name__)
 requests.post(debug_webhook_url , json={"message": "Starting App"})
 
-def get_differences(pre_tags, post_tags):
-    pre_tags_set = set(pre_tags.split(", "))
-    post_tags_set = set(post_tags.split(", "))
-    
-    removed_tags = pre_tags_set - post_tags_set
-    added_tags = post_tags_set - pre_tags_set
-    
-    differences = {
-        "removed_tags": list(removed_tags),
-        "added_tags": list(added_tags)
-    }
-    
-    return differences
-
-def fetch_netbox_device_info(netbox_url, netbox_token, device_id):
-    headers = {
-        'Authorization': f'Token {netbox_token}',
-        'Content-Type': 'application/json'
-    }
-    try:
-        response = requests.get(f"{netbox_url}/api/dcim/devices/{device_id}/", headers=headers, verify=False)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            logging.error(f"Failed to fetch device info from NetBox: {response.status_code} - {response.text}")
-            return None
-    except requests.exceptions.RequestException as e:
-        logging.error(f"RequestException while fetching device info from NetBox: {e}")
-        return None
-
-def get_host_macros(zabbix , host_id):
-    host = zabbix .host.get(filter={"hostid": host_id}, selectMacros="extend")
-    return host[0]['macros'] if host else []
-
-def update_host_macros(zabbix , host_id, macros):
-    zabbix .host.update({
-        "hostid": host_id,
-        "macros": macros
-    })
-
-def sanitize_value(value):
-    return value.strip()
 
 # Read Vault credentials from environment variables
 vault_url, vault_token, mount_point = read_vault_credentials()
@@ -140,8 +98,7 @@ netbox_token = netbox_credentials['netbox_token']
 zabbix_credentials = get_vault_credentials(vault_url, vault_token, mount_point, zabbix_secret_path)
 zabbix_url = zabbix_credentials['zabbix_url']
 zabbix_token = zabbix_credentials['zabbix_token']
-#zabbix  =ZabbixAPI(url=zabbix_url)
-#zabbix .set_auth_token(zabbix_token) 
+
 
 # Initialize Zabbix API
 #zabbix  = ZabbixAPI(url=zabbix_url, auth_token=zabbix_token)
@@ -210,7 +167,7 @@ def webhook():
             prechange_tags = data['Snapshots']['Prechange Tags']
             postchange_tags = data['Snapshots']['Postchange Tags']
             
-            differences = get_differences(prechange_tags, postchange_tags)
+            differences = get_differences_tag(prechange_tags, postchange_tags)
             logging.info(f"Differences: {differences}")
             
             for tag in differences['added_tags']:
