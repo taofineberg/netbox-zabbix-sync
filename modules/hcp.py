@@ -18,8 +18,6 @@ secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credentia
 retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
 
 
-
-
 def read_vault_credentials():
     """Read Vault credentials from environment variables."""
     vault_url = os.getenv('VAULT_URL')
