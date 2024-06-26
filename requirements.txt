@@ -5,3 +5,5 @@ flask
 git+https://github.com/taofineberg/pynetbox.git
 apscheduler
 aiohttp
+azure-identity
+azure-keyvault-secrets

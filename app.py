@@ -19,6 +19,17 @@ from azure.keyvault.secrets import SecretClient
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
+
+# Azure Key Vault
+AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
+credential = DefaultAzureCredential()
+
+# Get secret from Azure Key Vault for HCP Vault Token
+secret_name = os.getenv('VAULT_TOKEN')
+secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
+retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
+print(f"The secret value is: {retrieved_secret_HCP_VAULT.value}")
+
 # Global variable to keep track of uptime
 uptime_counter = 1
 
@@ -71,7 +82,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(lev
 
 def read_vault_credentials():
     vault_url = os.getenv('VAULT_URL')
-    vault_token = os.getenv('VAULT_TOKEN')
+    vault_token = {retrieved_secret_HCP_VAULT.value} 
     mount_point = os.getenv('MOUNT_POINT')
     
     if not vault_url or not vault_token or not mount_point:
