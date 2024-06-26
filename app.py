@@ -222,18 +222,18 @@ def webhook():
                                 response = update_host_macros(zabbix , zabbix_hostid, combined_macros)
                                 logging.info(f"Updated Zabbix host macros: {json.dumps(response, indent=4)}")
                                 requests.post(debug_webhook_url , json={"message": "Device needs to be updated.", "device_id": device_id, "zabbix_id": zabbix_hostid})
-                                message = f"Device needs to be updated. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
-                                push_to_zabbix(zabbix , itemid_update_true, message)
+                               # message = f"Device needs to be updated. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
+                               # push_to_zabbix(zabbix , itemid_update_true, message)
                             else:
                                 logging.info("No changes to macros. Update not required.")
                                 requests.post(debug_webhook_url , json={"message": "No changes to macros. Update not required.", "device_id": device_id, "zabbix_id": zabbix_hostid})
-                                message = f"No changes to macros. Update not required. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
-                                push_to_zabbix(zabbix , itemid_update_false, message)
+                               # message = f"No changes to macros. Update not required. Device ID: {device_id}, Zabbix host ID: {zabbix_hostid}"
+                               # push_to_zabbix(zabbix , itemid_update_false, message)
                         except Exception as e:
                             logging.error(f"An error occurred while updating Zabbix host macros: {e}")
                             requests.post(debug_webhook_url , json={"message": "An error occurred while updating Zabbix host macros.", "device_id": device_id, "zabbix_id": zabbix_hostid})
-                            message = f"An error occurred while updating Zabbix host macros: device_id: {device_id}, zabbix_id: {zabbix_hostid}, error: {e}"
-                            push_to_zabbix(zabbix , itemid_error, message)
+                            # message = f"An error occurred while updating Zabbix host macros: device_id: {device_id}, zabbix_id: {zabbix_hostid}, error: {e}"
+                            # push_to_zabbix(zabbix , itemid_error, message)
                     break
             
             return jsonify(differences)
