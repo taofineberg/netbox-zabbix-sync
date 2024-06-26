@@ -4,11 +4,26 @@ import os
 import sys
 import logging
 import hvac
+from azure.identity import DefaultAzureCredential
+from azure.keyvault.secrets import SecretClient
+
+
+credential = DefaultAzureCredential()
+# Azure Key Vault
+AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
+
+# Get secret from Azure Key Vault for HCP Vault Token
+secret_name = os.getenv('VAULT_TOKEN')
+secret_client = SecretClient(vault_url="https://finenetkeyvault.vault.azure.net/", credential=credential)
+retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
+
+
+
 
 def read_vault_credentials():
     """Read Vault credentials from environment variables."""
     vault_url = os.getenv('VAULT_URL')
-    vault_token = os.getenv('VAULT_TOKEN')
+    vault_token = retrieved_secret_HCP_VAULT.value 
     mount_point = os.getenv('MOUNT_POINT')
     
     if not vault_url or not vault_token or not mount_point:
