@@ -32,7 +32,7 @@ retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
 print(f"The secret value is: {retrieved_secret_HCP_VAULT.value}")
 
 # Global variable to keep track of uptime
-uptime_counter = 1
+uptime_counter = 0
 
 def send_heartbeat():
     global uptime_counter
@@ -83,7 +83,7 @@ logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(lev
 
 def read_vault_credentials():
     vault_url = os.getenv('VAULT_URL')
-    vault_token = {retrieved_secret_HCP_VAULT.value} 
+    vault_token = retrieved_secret_HCP_VAULT.value 
     mount_point = os.getenv('MOUNT_POINT')
     
     if not vault_url or not vault_token or not mount_point:
