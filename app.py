@@ -1,33 +1,37 @@
 from flask import Flask, request, jsonify
-import hvac
+#import hvac
 import requests
 import json
 import logging
 from datetime import datetime
 import os
 import atexit
-import pynetbox
-import zabbix_utils
+#import pynetbox
+#import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
 import subprocess
 import asyncio
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+#from azure.identity import DefaultAzureCredential
+#from azure.keyvault.secrets import SecretClient
+from modules.hcp import read_vault_credentials, get_vault_credentials
+
+# Set up logging
+logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
 
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
-credential = DefaultAzureCredential()
+#credential = DefaultAzureCredential()
 
 # Azure Key Vault
-AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
+#AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
 
 # Get secret from Azure Key Vault for HCP Vault Token
-secret_name = os.getenv('HCP_VAULT_TOKEN_Azure_Keystore_name')
-secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
-retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
+#secret_name = os.getenv('HCP_VAULT_TOKEN_Azure_Keystore_name')
+#secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
+#retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
 
 # Global variable to keep track of uptime
 uptime_counter = 0
@@ -76,34 +80,6 @@ async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestam
 
 app = Flask(__name__)
 requests.post(debug_webhook_url , json={"message": "Starting App"})
-
-logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
-
-def read_vault_credentials():
-    vault_url = os.getenv('VAULT_URL')
-    vault_token = retrieved_secret_HCP_VAULT.value 
-    mount_point = os.getenv('MOUNT_POINT')
-    
-    if not vault_url or not vault_token or not mount_point:
-        raise ValueError("Environment variables for Vault credentials are not set properly.")
-    
-    return vault_url, vault_token, mount_point
-
-def get_vault_credentials(vault_url, vault_token, mount_point, secret_path):
-    try:
-        client = hvac.Client(url=vault_url, token=vault_token)
-        secret = client.secrets.kv.v2.read_secret_version(
-            mount_point=mount_point,
-            path=secret_path,
-            raise_on_deleted_version=True
-        )
-        return secret['data']['data']
-    except hvac.exceptions.Forbidden:
-        logging.error("Permission denied. Check if the token has read access to the specified path.")
-        exit(1)
-    except Exception as e:
-        logging.error(f"An error occurred while retrieving secrets from Vault: {e}")
-        exit(1)
 
 def get_differences(pre_tags, post_tags):
     pre_tags_set = set(pre_tags.split(", "))
