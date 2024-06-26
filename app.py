@@ -10,12 +10,12 @@ import atexit
 #import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from modules.webhook_utils import compare_snapshots, normalize_json  # Import functions from the new module
+from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value
 import subprocess
 import asyncio
 #from azure.identity import DefaultAzureCredential
 #from azure.keyvault.secrets import SecretClient
-from modules.hcp import read_vault_credentials, get_vault_credentials,get_differences_tag , fetch_netbox_device_info , get_host_macros , update_host_macros , sanitize_value 
+from modules.hcp import read_vault_credentials, get_vault_credentials 
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(levelname)s] - %(message)s')
@@ -101,7 +101,6 @@ zabbix_token = zabbix_credentials['zabbix_token']
 
 
 # Initialize Zabbix API
-#zabbix  = ZabbixAPI(url=zabbix_url, auth_token=zabbix_token)
 zabbix  = ZabbixAPI(zabbix_url, token=zabbix_token)
 
 # Get Zabbix item IDs for monitoring
