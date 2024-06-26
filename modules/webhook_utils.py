@@ -1,5 +1,7 @@
 import json
 import logging
+import requests
+
 
 def compare_snapshots(prechange, postchange):
     logging.info(f"prechange: {prechange}")
