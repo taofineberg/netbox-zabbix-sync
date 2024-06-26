@@ -57,10 +57,10 @@ def send_heartbeat():
     requests.post(debug_webhook_url , json={"message": f"App is up. Uptime: {uptime_counter} minutes"})
 
 
-async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestamp):
+def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestamp):
     try:
         sender = AsyncSender(server=zabbix_server, port=10051)
-        response = await sender.send_value(host, item_key, zbx_item_value, timestamp)
+        response = sender.send_value(host, item_key, zbx_item_value, timestamp)
         logging.info(f"Successfully pushed value to Zabbix: {response}")
     except Exception as e:
         logging.error(f"An error occurred: {e}")
@@ -75,16 +75,6 @@ scheduler.start()
 
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
-
-
-
-async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestamp):
-    try:
-        sender = AsyncSender(server=zabbix_server, port=10051)
-        response = await sender.send_value(host, item_key, zbx_item_value, timestamp)
-        logging.info(f"Successfully pushed value to Zabbix: {response}")
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
 
 app = Flask(__name__)
 requests.post(debug_webhook_url , json={"message": "Starting App"})
