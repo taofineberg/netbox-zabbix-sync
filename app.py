@@ -1,12 +1,11 @@
 from flask import Flask, request, jsonify
-#import hvac
 import requests
 import json
 import logging
 from datetime import datetime
 import os
 import atexit
-from zabbix_utils import ZabbixAPI,Sender,AsyncSender
+from zabbix_utils import ZabbixAPI,Sender
 from apscheduler.schedulers.background import BackgroundScheduler
 from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value,get_item_ids,push_to_zabbix
 import subprocess
@@ -56,7 +55,9 @@ uptime_counter = 0
 def send_heartbeat():
     global uptime_counter
     uptime_counter += 1
-    requests.post(debug_webhook_url , json={"message": f"App is up. Uptime: {uptime_counter} minutes"})
+    
+    # Send a heartbeat message to the debug webhook
+    #requests.post(debug_webhook_url , json={"message": f"App is up. Uptime: {uptime_counter} minutes"})
 
 
 scheduler = BackgroundScheduler()
