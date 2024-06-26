@@ -65,3 +65,13 @@ def update_host_macros(zabbix , host_id, macros):
 
 def sanitize_value(value):
     return value.strip()
+
+def get_item_ids(zabbix , host_name, item_names):
+    items = zabbix .item.get(filter={"host": host_name}, output=["itemid", "name"], sortfield="name")
+    
+    item_ids = {}
+    for item in items:
+        if item['name'] in item_names:
+            item_ids[item['name']] = item['itemid']
+
+    return item_ids

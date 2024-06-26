@@ -6,15 +6,12 @@ import logging
 from datetime import datetime
 import os
 import atexit
-#import pynetbox
-#import zabbix_utils
 from zabbix_utils import ZabbixAPI ,AsyncSender
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value
+from modules.webhook_utils import compare_snapshots, normalize_json, get_differences_tag, fetch_netbox_device_info, get_host_macros, update_host_macros, sanitize_value,get_item_ids
 import subprocess
 import asyncio
-#from azure.identity import DefaultAzureCredential
-#from azure.keyvault.secrets import SecretClient
+
 from modules.hcp import read_vault_credentials, get_vault_credentials 
 
 # Set up logging
@@ -23,17 +20,6 @@ logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(lev
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
-#credential = DefaultAzureCredential()
-
-# Azure Key Vault
-#AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
-
-# Get secret from Azure Key Vault for HCP Vault Token
-#secret_name = os.getenv('HCP_VAULT_TOKEN_Azure_Keystore_name')
-#secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
-#retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
-
-# Global variable to keep track of uptime
 uptime_counter = 0
 
 def send_heartbeat():
@@ -60,15 +46,7 @@ scheduler.start()
 # Shut down the scheduler when exiting the app
 atexit.register(lambda: scheduler.shutdown())
 
-def get_item_ids(zabbix , host_name, item_names):
-    items = zabbix .item.get(filter={"host": host_name}, output=["itemid", "name"], sortfield="name")
-    
-    item_ids = {}
-    for item in items:
-        if item['name'] in item_names:
-            item_ids[item['name']] = item['itemid']
 
-    return item_ids
 
 async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestamp):
     try:
@@ -80,7 +58,6 @@ async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestam
 
 app = Flask(__name__)
 requests.post(debug_webhook_url , json={"message": "Starting App"})
-
 
 # Read Vault credentials from environment variables
 vault_url, vault_token, mount_point = read_vault_credentials()
