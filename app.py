@@ -20,6 +20,35 @@ logging.basicConfig(level=logging.DEBUG, format='%(lineno)d - %(asctime)s [%(lev
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
+# Read Vault credentials from environment variables
+vault_url, vault_token, mount_point = read_vault_credentials()
+
+# Set the path to the secrets in Vault
+netbox_secret_path = 'netbox'
+zabbix_secret_path = 'zabbix'
+
+# Retrieve NetBox and Zabbix credentials from Vault
+netbox_credentials = get_vault_credentials(vault_url, vault_token, mount_point, netbox_secret_path)
+netbox_url = netbox_credentials['netbox_url']
+netbox_token = netbox_credentials['netbox_token']
+
+# Retrieve Zabbix credentials from Vault
+zabbix_credentials = get_vault_credentials(vault_url, vault_token, mount_point, zabbix_secret_path)
+zabbix_url = zabbix_credentials['zabbix_url']
+zabbix_token = zabbix_credentials['zabbix_token']
+
+# Initialize Zabbix API
+zabbix  = ZabbixAPI(zabbix_url, token=zabbix_token)
+
+# Get Zabbix item IDs for monitoring
+ZBX_Monitoring_host = os.getenv('ZBX_MONITORING_HOST_NAME')
+item_names = ["error", "update_false", "update_true", "uptime"]
+item_ids = get_item_ids(zabbix , ZBX_Monitoring_host, item_names)
+itemid_uptime = item_ids.get("uptime", "")
+itemid_error = item_ids.get("error", "")
+itemid_update_true = item_ids.get("update_true", "")
+itemid_update_false = item_ids.get("update_false", "")
+
 uptime_counter = 0
 
 def send_heartbeat():
@@ -59,35 +88,6 @@ async def push_to_zabbix(zabbix_server, host, item_key, zbx_item_value, timestam
 app = Flask(__name__)
 requests.post(debug_webhook_url , json={"message": "Starting App"})
 
-# Read Vault credentials from environment variables
-vault_url, vault_token, mount_point = read_vault_credentials()
-
-# Set the path to the secrets in Vault
-netbox_secret_path = 'netbox'
-zabbix_secret_path = 'zabbix'
-
-# Retrieve NetBox and Zabbix credentials from Vault
-netbox_credentials = get_vault_credentials(vault_url, vault_token, mount_point, netbox_secret_path)
-netbox_url = netbox_credentials['netbox_url']
-netbox_token = netbox_credentials['netbox_token']
-
-# Retrieve Zabbix credentials from Vault
-zabbix_credentials = get_vault_credentials(vault_url, vault_token, mount_point, zabbix_secret_path)
-zabbix_url = zabbix_credentials['zabbix_url']
-zabbix_token = zabbix_credentials['zabbix_token']
-
-
-# Initialize Zabbix API
-zabbix  = ZabbixAPI(zabbix_url, token=zabbix_token)
-
-# Get Zabbix item IDs for monitoring
-ZBX_Monitoring_host = os.getenv('ZBX_MONITORING_HOST_NAME')
-item_names = ["error", "update_false", "update_true", "uptime"]
-item_ids = get_item_ids(zabbix , ZBX_Monitoring_host, item_names)
-itemid_uptime = item_ids.get("uptime", "")
-itemid_error = item_ids.get("error", "")
-itemid_update_true = item_ids.get("update_true", "")
-itemid_update_false = item_ids.get("update_false", "")
 
 @app.route('/', methods=['POST'])
 def webhook():
