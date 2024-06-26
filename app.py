@@ -22,6 +22,7 @@ debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
 # Azure Key Vault
 AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
+print(f"AZURE_KEY_VAULT_URL: {AZURE_KEY_VAULT_URL}")
 credential = DefaultAzureCredential()
 
 # Get secret from Azure Key Vault for HCP Vault Token
