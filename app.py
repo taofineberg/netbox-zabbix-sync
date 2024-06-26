@@ -27,7 +27,7 @@ credential = DefaultAzureCredential()
 
 # Get secret from Azure Key Vault for HCP Vault Token
 secret_name = os.getenv('VAULT_TOKEN')
-secret_client = SecretClient(vault_url={AZURE_KEY_VAULT_URL}, credential=credential)
+secret_client = SecretClient(vault_url="https://finenetkeyvault.vault.azure.net/", credential=credential)
 retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
 print(f"The secret value is: {retrieved_secret_HCP_VAULT.value}")
 
