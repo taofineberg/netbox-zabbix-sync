@@ -19,17 +19,21 @@ from azure.keyvault.secrets import SecretClient
 # read debug webhook url
 debug_webhook_url = os.getenv('DEBUG_WEBHOOK_URL')
 
+credential = DefaultAzureCredential()
 
 # Azure Key Vault
 AZURE_KEY_VAULT_URL = os.getenv('AZURE_KEY_VAULT_URL')
 print(f"AZURE_KEY_VAULT_URL: {AZURE_KEY_VAULT_URL}")
-credential = DefaultAzureCredential()
+
 
 # Get secret from Azure Key Vault for HCP Vault Token
 secret_name = os.getenv('VAULT_TOKEN')
-secret_client = SecretClient(vault_url="https://finenetkeyvault.vault.azure.net/", credential=credential)
+secret_client = SecretClient(vault_url=AZURE_KEY_VAULT_URL, credential=credential)
 retrieved_secret_HCP_VAULT = secret_client.get_secret(secret_name)
 print(f"The secret value is: {retrieved_secret_HCP_VAULT.value}")
+
+
+
 
 # Global variable to keep track of uptime
 uptime_counter = 0
