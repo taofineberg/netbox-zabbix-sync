@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/opt/netbox-zabbix-sync/.venv/bin/python3.11
 # pylint: disable=invalid-name, logging-not-lazy, too-many-locals, logging-fstring-interpolation
 
 """NetBox to Zabbix sync script."""
@@ -14,6 +14,7 @@ from modules.device import PhysicalDevice
 from modules.virtual_machine import VirtualMachine
 from modules.tools import convert_recordset, proxy_prepper
 from modules.exceptions import EnvironmentVarError, HostgroupError, SyncError
+from dotenv import load_dotenv
 try:
     from config import (
         templates_config_context,
@@ -32,6 +33,8 @@ except ModuleNotFoundError:
     print("Configuration file config.py not found in main directory."
           "Please create the file or rename the config.py.example file to config.py.")
     sys.exit(1)
+
+load_dotenv("/opt/creds/netbox_sync2.env")
 
 # Set logging
 log_format = logging.Formatter('%(asctime)s - %(name)s - '
@@ -85,7 +88,7 @@ def main(arguments):
     # Check if the provided Hostgroup layout is valid
     hg_objects = hostgroup_format.split("/")
     allowed_objects = ["location", "role", "manufacturer", "region",
-                       "site", "site_group", "tenant", "tenant_group"]
+                       "site", "site_group", "tenant", "tenant_group","dev_role"]
     # Create API call to get all custom fields which are on the device objects
     try:
         device_cfs = list(netbox.extras.custom_fields.filter(

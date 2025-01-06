@@ -55,6 +55,8 @@ class PhysicalDevice():
         self.inventory = {}
         self.logger = logger if logger else getLogger(__name__)
         self._setBasics()
+        self.tag = [{"tag":'Status',"value":str(self.nb.status.label)},{"tag":'Platform',"value":str(self.nb.platform)},{"tag":'SiteName',"value":str(self.nb.site.display)},{"tag":'DeviceType',"value":str(self.nb.device_type.display)},{"tag":'DeviceManufacturer',"value":str(self.nb.device_type.manufacturer.display)},{"tag":'Tenant',"value":str(self.nb.tenant)},{"tag":'NBDeviceID',"value":str(self.nb.id)},{"tag":'Role',"value":str(self.nb.role.display)},{"tag":'ZBXHostID',"value":str(self.zabbix_id)}]
+        self.macro = [{"macro": '{$NETBOX_DEVICE}', "value": str(self.nb.id)},{"macro": '{$NETBOX_TENANT}', "value": str(self.nb.tenant)}]
 
     def __repr__(self):
         return self.name
@@ -416,6 +418,7 @@ class PhysicalDevice():
             # Set interface, group and template configuration
             interfaces = self.setInterfaceDetails()
             groups = [{"groupid": self.group_id}]
+            tags= [{"tag":'Status',"value":str(self.nb.status.label)},{"tag":'Platform',"value":str(self.nb.platform)},{"tag":'SiteName',"value":str(self.nb.site.display)},{"tag":'DeviceType',"value":str(self.nb.device_type.display)},{"tag":'DeviceManufacturer',"value":str(self.nb.device_type.manufacturer.display)},{"tag":'Tenant',"value":str(self.nb.tenant.display)},{"tag":'NBDeviceID',"value":str(self.nb.id)},{"tag":'Role',"value":str(self.nb.role.display)},{"tag":'ZBXHostID',"value":str(self.zabbix_id)}]
             # Set Zabbix proxy if defined
             self.setProxy(proxies)
             # Set basic data for host creation
@@ -427,7 +430,8 @@ class PhysicalDevice():
                             "templates": templateids,
                             "description": description,
                             "inventory_mode": self.inventory_mode,
-                            "inventory": self.inventory
+                            "inventory": self.inventory,
+                            "tags":tags
                             }
             # If a Zabbix proxy or Zabbix Proxy group has been defined
             if self.zbxproxy:
@@ -588,13 +592,13 @@ class PhysicalDevice():
                 break
         else:
             self.logger.warning(f"Host {self.name}: hostgroup OUT of sync.")
-            self.updateZabbixHost(groups={'groupid': self.group_id})
+            self.updateZabbixHost(groups={'groupid': self.group_id},tags=self.tag)
 
         if int(host["status"]) == self.zabbix_state:
             self.logger.debug(f"Host {self.name}: status in-sync.")
         else:
             self.logger.warning(f"Host {self.name}: status OUT of sync.")
-            self.updateZabbixHost(status=str(self.zabbix_state))
+            self.updateZabbixHost(status=str(self.zabbix_state),tags=self.tag)
         # Check if a proxy has been defined
         if self.zbxproxy:
             # Check if proxy or proxy group is defined
