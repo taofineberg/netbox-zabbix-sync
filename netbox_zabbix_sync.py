@@ -25,7 +25,7 @@ try:
         zabbix_device_disable,
         hostgroup_format,
         vm_hostgroup_format,
-        nb_device_filter,
+        #nb_device_filter,
         sync_vms,
         nb_vm_filter
     )
@@ -133,6 +133,11 @@ def main(arguments):
     else:
         proxy_name = "name"
     # Get all Zabbix and NetBox data
+    if arguments.device_id:
+        nb_device_filter = {"id": arguments.device_id}  # Set the filter based on the command-line argument used by webhook
+    else:
+        nb_device_filter = {"name__n": "null"}
+    
     netbox_devices = list(netbox.dcim.devices.filter(**nb_device_filter))
     netbox_vms = []
     if sync_vms:
@@ -285,5 +290,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("-v", "--verbose", help="Turn on debugging.",
                         action="store_true")
+    parser.add_argument("-d", "--device-id", type=int, help="NetBox device ID to filter devices used by webhook")
     args = parser.parse_args()
     main(args)
