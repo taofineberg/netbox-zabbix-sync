@@ -87,9 +87,9 @@ def webhook():
             '-d',  # Webhook host ID (Netbox ID)
             str(netbox_id)
         ]
-
-    if updatetags:
-        command.extend(['-t'])
+# This is failing as the script is not able to execute the command as -t is not a valid argument ### need to look into this
+   # if updatetags:  
+   #     command.extend(['-t'])
 
     logging.info(f"Executing command: {command}")    
     try:
@@ -106,7 +106,7 @@ def webhook():
             PYTHON_PATH,
             SLA_SCRIPT_PATH
         ]
-        try:
+        try:        
             subprocess.run(sla_command, check=True)
         except subprocess.CalledProcessError:
             logging.error("Failed to execute the SLA script")
